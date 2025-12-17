@@ -16,25 +16,48 @@ A modern Express.js application built with TypeScript following the MVC (Model-V
 ```
 express-mvc/
 ├── src/
-│   ├── controllers/      # Request handlers
+│   ├── config/          # Configuration files
+│   │   ├── database.ts
+│   │   └── database.config.js
+│   ├── controllers/     # Request handlers
 │   │   ├── HelloController.ts
 │   │   └── UserController.ts
 │   ├── services/        # Business logic
 │   │   ├── HelloService.ts
 │   │   └── UserService.ts
+│   ├── repositories/    # Data access layer
+│   │   ├── IRepository.ts
+│   │   └── UserRepository.ts
+│   ├── models/          # Sequelize models
+│   │   └── User.ts
+│   ├── migrations/      # Database migrations
+│   │   └── 20240101000000-create-users-table.ts
+│   ├── seeders/         # Database seeders
+│   │   └── 20240101000000-demo-users.ts
 │   ├── routes/          # API routes
 │   │   ├── index.ts
 │   │   ├── helloRoutes.ts
 │   │   └── userRoutes.ts
 │   ├── middleware/      # Custom middleware
-│   │   └── errorHandler.ts
-│   ├── types/          # TypeScript interfaces
+│   │   ├── errorHandler.ts
+│   │   └── logger.ts
+│   ├── utils/           # Utility functions
+│   │   ├── httpResponse.ts
+│   │   └── logger.ts
+│   ├── types/           # TypeScript interfaces
 │   │   └── User.ts
-│   └── index.ts        # Application entry point
-├── dist/               # Compiled JavaScript files
-├── tsconfig.json       # TypeScript configuration
-├── nodemon.json        # Nodemon configuration
-└── package.json        # Project dependencies
+│   └── index.ts         # Application entry point
+├── docs/                # 📚 Documentation
+│   ├── ARCHITECTURE.md
+│   ├── API_EXAMPLES.md
+│   ├── SEQUELIZE_SETUP.md
+│   └── ...
+├── dist/                # Compiled JavaScript files
+├── docker-compose.yml   # Docker configuration
+├── .sequelizerc         # Sequelize CLI config
+├── tsconfig.json        # TypeScript configuration
+├── nodemon.json         # Nodemon configuration
+└── package.json         # Project dependencies
 
 ```
 
@@ -205,10 +228,34 @@ The project uses strict TypeScript configuration for maximum type safety:
 
 ## Scripts
 
+### Development
 - `npm run dev` - Start development server with hot reload
 - `npm run build` - Compile TypeScript to JavaScript
 - `npm start` - Run compiled application
 - `npm run clean` - Remove dist folder
+
+### Database Management
+- `npm run db:migrate` - Run all pending migrations
+- `npm run db:migrate:undo` - Undo the most recent migration
+- `npm run db:migrate:undo:all` - Undo all migrations
+- `npm run db:seed` - Run all seeders
+- `npm run db:seed:undo` - Undo all seeders
+- `npm run db:create` - Create a new database
+- `npm run db:drop` - Drop the database
+
+## Documentation
+
+All project documentation is located in the `/docs` directory:
+
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design patterns
+- **[API Examples](docs/API_EXAMPLES.md)** - API endpoint examples and usage
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Quick reference guide
+- **[Enhanced Features](docs/ENHANCED_FEATURES.md)** - Advanced features documentation
+- **[Setup Complete](docs/SETUP_COMPLETE.md)** - Initial setup documentation
+- **[Implementation Complete](docs/IMPLEMENTATION_COMPLETE.md)** - Implementation details
+- **[PostgreSQL Setup](docs/POSTGRES_SETUP.md)** - PostgreSQL and Docker configuration
+- **[Sequelize Setup](docs/SEQUELIZE_SETUP.md)** - Sequelize ORM setup guide
+- **[Sequelize Migration Summary](docs/SEQUELIZE_MIGRATION_SUMMARY.md)** - Migration details
 
 ## Technologies
 
