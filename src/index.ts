@@ -17,7 +17,11 @@ app.get('/', (req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      users: '/api/users'
+      users: '/api/users',
+      hello: '/api/hello',
+      helloPersonalized: '/api/hello/personalized/:name',
+      helloRandom: '/api/hello/random',
+      helloLanguages: '/api/hello/languages'
     }
   });
 });
@@ -43,6 +47,9 @@ app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`👥 Users API: http://localhost:${PORT}/api/users`);
+  console.log(`👋 Hello API: http://localhost:${PORT}/api/hello`);
+  console.log(`🌍 Hello Random: http://localhost:${PORT}/api/hello/random`);
+  console.log(`🗣️  Hello Languages: http://localhost:${PORT}/api/hello/languages`);
 });
 
 export default app;
