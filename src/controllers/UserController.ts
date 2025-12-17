@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
+import { HttpResponse } from '../utils/httpResponse';
+import { Logger } from '../utils/logger';
 
 export class UserController {
   private userService: UserService;
+  private logger: Logger;
 
   constructor() {
     this.userService = new UserService();
+    this.logger = new Logger({ module: 'UserController' });
   }
 
   // GET /users
@@ -15,21 +19,17 @@ export class UserController {
       
       let users;
       if (search && typeof search === 'string') {
+        this.logger.info(`Searching users with query: ${search}`);
         users = this.userService.searchUsers(search);
       } else {
+        this.logger.info('Fetching all users');
         users = this.userService.getAllUsers();
       }
       
-      res.status(200).json({
-        success: true,
-        data: users,
-        count: users.length
-      });
+      HttpResponse.success(res, { users, count: users.length });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      this.logger.error('Error fetching users', error as Error);
+      HttpResponse.internalError(res, 'Failed to fetch users');
     }
   }
 
@@ -39,41 +39,28 @@ export class UserController {
       const { id } = req.params;
       
       if (!id) {
-        res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+        HttpResponse.badRequest(res, 'User ID is required');
         return;
       }
       
       const userId = parseInt(id);
       if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID format'
-        });
+        HttpResponse.badRequest(res, 'Invalid user ID format');
         return;
       }
 
+      this.logger.info(`Fetching user with ID: ${userId}`);
       const user = this.userService.getUserById(userId);
       
       if (!user) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
+        HttpResponse.notFound(res, `User with ID ${userId} not found`);
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: user
-      });
+      HttpResponse.success(res, user);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      this.logger.error(`Error fetching user by ID`, error as Error);
+      HttpResponse.internalError(res, 'Failed to fetch user');
     }
   }
 
@@ -83,35 +70,25 @@ export class UserController {
       const { name, email } = req.body;
       
       if (!name || !email) {
-        res.status(400).json({
-          success: false,
-          message: 'Name and email are required'
-        });
+        HttpResponse.badRequest(res, 'Name and email are required');
         return;
       }
 
+      this.logger.info(`Creating new user: ${email}`);
+      
       // Check if user with email already exists
       const existingUser = this.userService.getUserByEmail(email);
       if (existingUser) {
-        res.status(409).json({
-          success: false,
-          message: 'User with this email already exists'
-        });
+        this.logger.warn(`Attempted to create duplicate user: ${email}`);
+        HttpResponse.conflict(res, 'User with this email already exists');
         return;
       }
 
       const newUser = this.userService.createUser({ name, email });
-      
-      res.status(201).json({
-        success: true,
-        data: newUser,
-        message: 'User created successfully'
-      });
+      HttpResponse.created(res, newUser, 'User created successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      this.logger.error('Error creating user', error as Error);
+      HttpResponse.internalError(res, 'Failed to create user');
     }
   }
 
@@ -122,42 +99,28 @@ export class UserController {
       const { name, email } = req.body;
       
       if (!id) {
-        res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+        HttpResponse.badRequest(res, 'User ID is required');
         return;
       }
 
       const userId = parseInt(id);
       if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID format'
-        });
+        HttpResponse.badRequest(res, 'Invalid user ID format');
         return;
       }
 
+      this.logger.info(`Updating user with ID: ${userId}`);
       const updatedUser = this.userService.updateUser(userId, { name, email });
       
       if (!updatedUser) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
+        HttpResponse.notFound(res, `User with ID ${userId} not found`);
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        data: updatedUser,
-        message: 'User updated successfully'
-      });
+      HttpResponse.success(res, updatedUser, 'User updated successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      this.logger.error(`Error updating user`, error as Error);
+      HttpResponse.internalError(res, 'Failed to update user');
     }
   }
 
@@ -167,41 +130,28 @@ export class UserController {
       const { id } = req.params;
       
       if (!id) {
-        res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
+        HttpResponse.badRequest(res, 'User ID is required');
         return;
       }
 
       const userId = parseInt(id);
       if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID format'
-        });
+        HttpResponse.badRequest(res, 'Invalid user ID format');
         return;
       }
 
+      this.logger.info(`Deleting user with ID: ${userId}`);
       const deleted = this.userService.deleteUser(userId);
       
       if (!deleted) {
-        res.status(404).json({
-          success: false,
-          message: 'User not found'
-        });
+        HttpResponse.notFound(res, `User with ID ${userId} not found`);
         return;
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'User deleted successfully'
-      });
+      HttpResponse.success(res, null, 'User deleted successfully');
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
+      this.logger.error(`Error deleting user`, error as Error);
+      HttpResponse.internalError(res, 'Failed to delete user');
     }
   }
 }
