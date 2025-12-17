@@ -8,22 +8,8 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 /**
  * Create and configure Pino logger
  */
-const logger = pino({
+const loggerOptions: any = {
   level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
-  
-  // Use pino-pretty in development for human-readable logs
-  transport: isDevelopment
-    ? {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          translateTime: 'SYS:standard',
-          ignore: 'pid,hostname',
-          singleLine: false,
-          messageFormat: '{levelLabel} - {msg}',
-        },
-      }
-    : undefined,
 
   // Base configuration
   base: {
@@ -53,7 +39,23 @@ const logger = pino({
     }),
     err: pino.stdSerializers.err,
   },
-});
+};
+
+// Use pino-pretty in development for human-readable logs
+if (isDevelopment) {
+  loggerOptions.transport = {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+      translateTime: 'SYS:standard',
+      ignore: 'pid,hostname',
+      singleLine: false,
+      messageFormat: '{levelLabel} - {msg}',
+    },
+  };
+}
+
+const logger = pino(loggerOptions);
 
 /**
  * Create child logger with additional context

@@ -5,6 +5,7 @@ import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { requestLogger, errorLogger } from './middleware/logger';
 import { Logger } from './utils/logger';
+import { testConnection, closeConnection } from './config/database';
 
 const logger = new Logger({ module: 'Server' });
 const app: Application = express();
@@ -53,28 +54,47 @@ app.use(errorHandler);
 // Start server
 let server: Server;
 
-server = app.listen(PORT, () => {
-  logger.info(`🚀 Server is running on port ${PORT}`);
-  logger.info(`📍 Health check: http://localhost:${PORT}/health`);
-  logger.info(`👥 Users API: http://localhost:${PORT}/api/users`);
-  logger.info(`👋 Hello API: http://localhost:${PORT}/api/hello`);
-  logger.info(`🌍 Hello Random: http://localhost:${PORT}/api/hello/random`);
-  logger.info(`🗣️  Hello Languages: http://localhost:${PORT}/api/hello/languages`);
-  logger.info('Server started successfully');
-});
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Test database connection
+    await testConnection();
+    logger.info('✅ Database connected successfully');
+
+    server = app.listen(PORT, () => {
+      logger.info(`🚀 Server is running on port ${PORT}`);
+      logger.info(`📍 Health check: http://localhost:${PORT}/health`);
+      logger.info(`👥 Users API: http://localhost:${PORT}/api/users`);
+      logger.info(`👋 Hello API: http://localhost:${PORT}/api/hello`);
+      logger.info(`🌍 Hello Random: http://localhost:${PORT}/api/hello/random`);
+      logger.info(`🗣️  Hello Languages: http://localhost:${PORT}/api/hello/languages`);
+      logger.info('Server started successfully');
+    });
+  } catch (error) {
+    logger.fatal('Failed to start server', error as Error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 /**
  * Graceful shutdown handler
  * Handles SIGTERM and SIGINT signals for clean shutdown
  */
-const gracefulShutdown = (signal: string) => {
+const gracefulShutdown = async (signal: string) => {
   logger.info(`${signal} signal received: closing HTTP server`);
   
-  server.close(() => {
+  server.close(async () => {
     logger.info('HTTP server closed');
     
-    // Close database connections here if any
-    // await db.close();
+    try {
+      // Close database connection
+      await closeConnection();
+      logger.info('Database connection closed');
+    } catch (error) {
+      logger.error('Error closing database connection', error as Error);
+    }
     
     logger.info('Graceful shutdown completed');
     process.exit(0);

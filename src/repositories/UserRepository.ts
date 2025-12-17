@@ -1,84 +1,85 @@
+import { Op } from 'sequelize';
 import { User } from '../types/User';
 import { IRepository } from './IRepository';
+import UserModel from '../models/User';
 
 /**
  * UserRepository
- * Handles all data access operations for User entities
- * In a real application, this would interact with a database
+ * Handles all data access operations for User entities using Sequelize
  */
 export class UserRepository implements IRepository<User> {
-  private users: User[] = [
-    { 
-      id: 1, 
-      name: 'John Doe', 
-      email: 'john@example.com', 
-      createdAt: new Date('2025-01-01'), 
-      updatedAt: new Date('2025-01-01') 
-    },
-    { 
-      id: 2, 
-      name: 'Jane Smith', 
-      email: 'jane@example.com', 
-      createdAt: new Date('2025-01-02'), 
-      updatedAt: new Date('2025-01-02') 
-    }
-  ];
-
   /**
-   * Get all users from the data store
+   * Get all users from the database
    */
-  public findAll(): User[] {
-    return this.users;
+  public async findAll(): Promise<User[]> {
+    const users = await UserModel.findAll();
+    return users.map(user => user.toJSON() as User);
   }
 
   /**
    * Find a user by their ID
    * @param id - User ID
    */
-  public findById(id: number | string): User | undefined {
+  public async findById(id: number | string): Promise<User | undefined> {
     const userId = typeof id === 'string' ? parseInt(id) : id;
-    return this.users.find(user => user.id === userId);
+    const user = await UserModel.findByPk(userId);
+    return user ? (user.toJSON() as User) : undefined;
   }
 
   /**
    * Find a user by their email address
    * @param email - User email
    */
-  public findByEmail(email: string): User | undefined {
-    return this.users.find(user => user.email.toLowerCase() === email.toLowerCase());
+  public async findByEmail(email: string): Promise<User | undefined> {
+    const user = await UserModel.findOne({
+      where: {
+        email: {
+          [Op.iLike]: email, // Case-insensitive search
+        },
+      },
+    });
+    return user ? (user.toJSON() as User) : undefined;
   }
 
   /**
    * Search users by name or email
    * @param query - Search query
    */
-  public search(query: string): User[] {
-    const lowercaseQuery = query.toLowerCase();
-    return this.users.filter(user => 
-      user.name.toLowerCase().includes(lowercaseQuery) || 
-      user.email.toLowerCase().includes(lowercaseQuery)
-    );
+  public async search(query: string): Promise<User[]> {
+    const users = await UserModel.findAll({
+      where: {
+        [Op.or]: [
+          {
+            name: {
+              [Op.iLike]: `%${query}%`,
+            },
+          },
+          {
+            email: {
+              [Op.iLike]: `%${query}%`,
+            },
+          },
+        ],
+      },
+    });
+    return users.map(user => user.toJSON() as User);
   }
 
   /**
    * Create a new user
    * @param data - User data
    */
-  public create(data: Partial<User>): User {
+  public async create(data: Partial<User>): Promise<User> {
     if (!data.name || !data.email) {
       throw new Error('Name and email are required');
     }
 
-    const newUser: User = {
-      id: Date.now(), // In production, this would be handled by the database
+    const newUser = await UserModel.create({
       name: data.name,
       email: data.email,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    });
 
-    this.users.push(newUser);
-    return newUser;
+    return newUser.toJSON() as User;
   }
 
   /**
@@ -86,59 +87,55 @@ export class UserRepository implements IRepository<User> {
    * @param id - User ID
    * @param data - Updated user data
    */
-  public update(id: number | string, data: Partial<User>): User | undefined {
+  public async update(id: number | string, data: Partial<User>): Promise<User | undefined> {
     const userId = typeof id === 'string' ? parseInt(id) : id;
-    const userIndex = this.users.findIndex(user => user.id === userId);
+    const user = await UserModel.findByPk(userId);
 
-    if (userIndex === -1) {
+    if (!user) {
       return undefined;
     }
 
-    const existingUser = this.users[userIndex];
-    if (!existingUser) {
-      return undefined;
+    const updateData: Partial<User> = {};
+    if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+    if (data.email !== undefined) {
+      updateData.email = data.email;
     }
 
-    const updatedUser: User = {
-      id: existingUser.id,
-      name: data.name ?? existingUser.name,
-      email: data.email ?? existingUser.email,
-      createdAt: existingUser.createdAt ?? new Date(),
-      updatedAt: new Date()
-    };
-
-    this.users[userIndex] = updatedUser;
-    return updatedUser;
+    await user.update(updateData);
+    return user.toJSON() as User;
   }
 
   /**
    * Delete a user
    * @param id - User ID
    */
-  public delete(id: number | string): boolean {
+  public async delete(id: number | string): Promise<boolean> {
     const userId = typeof id === 'string' ? parseInt(id) : id;
-    const userIndex = this.users.findIndex(user => user.id === userId);
+    const deletedCount = await UserModel.destroy({
+      where: { id: userId },
+    });
 
-    if (userIndex === -1) {
-      return false;
-    }
-
-    this.users.splice(userIndex, 1);
-    return true;
+    return deletedCount > 0;
   }
 
   /**
    * Check if a user exists
    * @param id - User ID
    */
-  public exists(id: number | string): boolean {
-    return this.findById(id) !== undefined;
+  public async exists(id: number | string): Promise<boolean> {
+    const userId = typeof id === 'string' ? parseInt(id) : id;
+    const count = await UserModel.count({
+      where: { id: userId },
+    });
+    return count > 0;
   }
 
   /**
    * Count total users
    */
-  public count(): number {
-    return this.users.length;
+  public async count(): Promise<number> {
+    return await UserModel.count();
   }
 }

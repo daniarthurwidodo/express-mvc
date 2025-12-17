@@ -20,10 +20,10 @@ export class UserController {
       let users;
       if (search && typeof search === 'string') {
         this.logger.info(`Searching users with query: ${search}`);
-        users = this.userService.searchUsers(search);
+        users = await this.userService.searchUsers(search);
       } else {
         this.logger.info('Fetching all users');
-        users = this.userService.getAllUsers();
+        users = await this.userService.getAllUsers();
       }
       
       HttpResponse.success(res, { users, count: users.length });
@@ -50,7 +50,7 @@ export class UserController {
       }
 
       this.logger.info(`Fetching user with ID: ${userId}`);
-      const user = this.userService.getUserById(userId);
+      const user = await this.userService.getUserById(userId);
       
       if (!user) {
         HttpResponse.notFound(res, `User with ID ${userId} not found`);
@@ -77,14 +77,14 @@ export class UserController {
       this.logger.info(`Creating new user: ${email}`);
       
       // Check if user with email already exists
-      const existingUser = this.userService.getUserByEmail(email);
+      const existingUser = await this.userService.getUserByEmail(email);
       if (existingUser) {
         this.logger.warn(`Attempted to create duplicate user: ${email}`);
         HttpResponse.conflict(res, 'User with this email already exists');
         return;
       }
 
-      const newUser = this.userService.createUser({ name, email });
+      const newUser = await this.userService.createUser({ name, email });
       HttpResponse.created(res, newUser, 'User created successfully');
     } catch (error) {
       this.logger.error('Error creating user', error as Error);
@@ -110,7 +110,7 @@ export class UserController {
       }
 
       this.logger.info(`Updating user with ID: ${userId}`);
-      const updatedUser = this.userService.updateUser(userId, { name, email });
+      const updatedUser = await this.userService.updateUser(userId, { name, email });
       
       if (!updatedUser) {
         HttpResponse.notFound(res, `User with ID ${userId} not found`);
@@ -141,7 +141,7 @@ export class UserController {
       }
 
       this.logger.info(`Deleting user with ID: ${userId}`);
-      const deleted = this.userService.deleteUser(userId);
+      const deleted = await this.userService.deleteUser(userId);
       
       if (!deleted) {
         HttpResponse.notFound(res, `User with ID ${userId} not found`);

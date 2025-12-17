@@ -11,16 +11,16 @@ export class UserService {
     this.logger = new Logger({ module: 'UserService' });
   }
 
-  public getAllUsers(): User[] {
+  public async getAllUsers(): Promise<User[]> {
     this.logger.debug('Fetching all users');
-    const users = this.userRepository.findAll();
+    const users = await this.userRepository.findAll();
     this.logger.info(`Found ${users.length} users`);
     return users;
   }
 
-  public getUserById(id: number): User | undefined {
+  public async getUserById(id: number): Promise<User | undefined> {
     this.logger.debug(`Fetching user with ID: ${id}`);
-    const user = this.userRepository.findById(id);
+    const user = await this.userRepository.findById(id);
     
     if (user) {
       this.logger.info(`User found: ${user.email}`);
@@ -31,25 +31,25 @@ export class UserService {
     return user;
   }
 
-  public createUser(userData: CreateUserDto): User {
+  public async createUser(userData: CreateUserDto): Promise<User> {
     this.logger.debug(`Creating user: ${userData.email}`);
     
     // Check if user already exists
-    const existingUser = this.userRepository.findByEmail(userData.email);
+    const existingUser = await this.userRepository.findByEmail(userData.email);
     if (existingUser) {
       this.logger.warn(`Attempted to create duplicate user: ${userData.email}`);
       throw new Error('User with this email already exists');
     }
 
-    const newUser = this.userRepository.create(userData);
+    const newUser = await this.userRepository.create(userData);
     this.logger.info(`User created successfully: ${newUser.email} (ID: ${newUser.id})`);
     return newUser;
   }
 
-  public updateUser(id: number, userData: UpdateUserDto): User | undefined {
+  public async updateUser(id: number, userData: UpdateUserDto): Promise<User | undefined> {
     this.logger.debug(`Updating user with ID: ${id}`);
     
-    const updatedUser = this.userRepository.update(id, userData);
+    const updatedUser = await this.userRepository.update(id, userData);
     
     if (updatedUser) {
       this.logger.info(`User updated successfully: ${updatedUser.email}`);
@@ -60,10 +60,10 @@ export class UserService {
     return updatedUser;
   }
 
-  public deleteUser(id: number): boolean {
+  public async deleteUser(id: number): Promise<boolean> {
     this.logger.debug(`Deleting user with ID: ${id}`);
     
-    const deleted = this.userRepository.delete(id);
+    const deleted = await this.userRepository.delete(id);
     
     if (deleted) {
       this.logger.info(`User deleted successfully (ID: ${id})`);
@@ -74,14 +74,14 @@ export class UserService {
     return deleted;
   }
 
-  public getUserByEmail(email: string): User | undefined {
+  public async getUserByEmail(email: string): Promise<User | undefined> {
     this.logger.debug(`Fetching user by email: ${email}`);
-    return this.userRepository.findByEmail(email);
+    return await this.userRepository.findByEmail(email);
   }
 
-  public searchUsers(query: string): User[] {
+  public async searchUsers(query: string): Promise<User[]> {
     this.logger.debug(`Searching users with query: ${query}`);
-    const users = this.userRepository.search(query);
+    const users = await this.userRepository.search(query);
     this.logger.info(`Found ${users.length} users matching query: ${query}`);
     return users;
   }
